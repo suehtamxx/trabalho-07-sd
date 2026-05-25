@@ -1,0 +1,9 @@
+# Ignorar arquivos de saída gerados, cache e ambiente virtual
+results/*.csv
+*.tmp
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+ENV/
+env/
