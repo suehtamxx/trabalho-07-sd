@@ -15,7 +15,6 @@ class Cliente(Base):
     __tablename__ = "clientes"
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, index=True)
-    # Relação para acessar pedidos facilmente
     pedidos = relationship("Pedido", back_populates="cliente")
 
 class Pedido(Base):
@@ -23,13 +22,11 @@ class Pedido(Base):
     id = Column(Integer, primary_key=True, index=True)
     descricao = Column(String)
     cliente_id = Column(Integer, ForeignKey("clientes.id"))
-    # Relação de volta para cliente
     cliente = relationship("Cliente", back_populates="pedidos")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db = SessionLocal()
-    # Garantir que as tabelas existam
     Base.metadata.create_all(bind=engine)
     try:
         if db.query(Cliente).count() == 0:
@@ -62,22 +59,16 @@ class ClienteCreate(BaseModel):
 
 @app.get("/api/recurso-lento")
 def recurso_lento(db: Session = Depends(get_db)):
-    # OTIMIZAÇÃO: joinedload() faz um JOIN no SQL. 
-    # Em vez de N+1 consultas, o banco resolve tudo em apenas 1 consulta!
     clientes = db.query(Cliente).options(joinedload(Cliente.pedidos)).all()
     resultado = []
 
     for cliente in clientes:
-        # Não há mais nova ida ao banco de dados aqui dentro do for!
-        # cliente.pedidos já está carregado na memória.
         resultado.append({
             "id": cliente.id,
             "nome": cliente.nome,
             "total_pedidos": len(cliente.pedidos) 
         })
     return resultado
-
-# =========================================================
 
 @app.get("/api/recurso-detalhe/{id}")
 def recurso_detalhe(id: int, db: Session = Depends(get_db)):
